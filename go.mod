@@ -1,4 +1,4 @@
-module asdaru/html2text
+module github.com/asdaru/html2text
 
 go 1.16
 
