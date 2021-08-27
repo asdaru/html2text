@@ -13,6 +13,8 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+var tableDepth int = 0
+
 // Options provide toggles and overrides to control specific rendering behaviors.
 type Options struct {
 	PrettyTables        bool                 // Turns on pretty ASCII rendering for table elements.
@@ -264,7 +266,15 @@ func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 	case atom.P, atom.Ul:
 		return ctx.paragraphHandler(node)
 
-	case atom.Table, atom.Tfoot, atom.Th, atom.Tr, atom.Td:
+	case atom.Table:
+		if ctx.options.PrettyTables && tableDepth < 10 {
+			tableDepth++
+			return ctx.handleTableElement(node)
+		} else if node.DataAtom == atom.Table {
+			return ctx.paragraphHandler(node)
+		}
+		return ctx.traverseChildren(node)
+	case atom.Tfoot, atom.Th, atom.Tr, atom.Td:
 		if ctx.options.PrettyTables {
 			return ctx.handleTableElement(node)
 		} else if node.DataAtom == atom.Table {

@@ -881,6 +881,37 @@ func TestPeriod(t *testing.T) {
 	}
 }
 
+func TestBadCycle(t *testing.T) {
+	htmlFiles := []struct {
+		file                  string
+		keywordShouldNotExist string
+		keywordShouldExist    string
+	}{
+		{
+			"utf8_bad_cycle.html",
+			"***",
+			"объекта капитального строительства",
+		},
+	}
+
+	for _, htmlFile := range htmlFiles {
+		bs, err := ioutil.ReadFile(path.Join(destPath, htmlFile.file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		text, err := FromReader(bytes.NewReader(bs), Options{PrettyTables: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(text, htmlFile.keywordShouldExist) {
+			t.Fatalf("keyword %s should  exists in file %s", htmlFile.keywordShouldExist, htmlFile.file)
+		}
+		if strings.Contains(text, htmlFile.keywordShouldNotExist) {
+			t.Fatalf("keyword %s should not exists in file %s", htmlFile.keywordShouldNotExist, htmlFile.file)
+		}
+	}
+}
+
 type StringMatcher interface {
 	MatchString(string) bool
 	String() string
