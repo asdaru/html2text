@@ -23,7 +23,7 @@ It requires go 1.x or newer ;)
 ## Download the package
 
 ```bash
-go get jaytaylor.com/html2text
+go get github.com/asdaru/html2text
 ```
 
 ## Example usage
@@ -34,7 +34,7 @@ package main
 import (
 	"fmt"
 
-	"jaytaylor.com/html2text"
+	"asdaru/html2text"
 )
 
 func main() {
@@ -78,13 +78,15 @@ func main() {
   </body>
 </html>`
 
-	text, err := html2text.FromString(inputHTML, html2text.Options{PrettyTables: true})
+	text, err := html2text.FromString(inputHTML, html2text.Options{PrettyTables: true,PrettyTablesMaxDepth: 10})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(text)
 }
 ```
+
+* PrettyTablesMaxDepth -need for difficult cases for prevent non stop cycle
 
 Output:
 ```

@@ -15,9 +15,10 @@ import (
 
 // Options provide toggles and overrides to control specific rendering behaviors.
 type Options struct {
-	PrettyTables        bool                 // Turns on pretty ASCII rendering for table elements.
-	PrettyTablesOptions *PrettyTablesOptions // Configures pretty ASCII rendering for table elements.
-	OmitLinks           bool                 // Turns on omitting links
+	PrettyTables         bool                 // Turns on pretty ASCII rendering for table elements.
+	PrettyTablesOptions  *PrettyTablesOptions // Configures pretty ASCII rendering for table elements.
+	OmitLinks            bool                 // Turns on omitting links
+	PrettyTablesMaxDepth int
 }
 
 // PrettyTablesOptions overrides tablewriter behaviors
@@ -63,11 +64,7 @@ func NewPrettyTablesOptions() *PrettyTablesOptions {
 }
 
 // FromHTMLNode renders text output from a pre-parsed HTML document.
-func FromHTMLNode(doc *html.Node, o ...Options) (string, error) {
-	var options Options
-	if len(o) > 0 {
-		options = o[0]
-	}
+func FromHTMLNode(doc *html.Node, options *Options) (string, error) {
 
 	ctx := textifyTraverseContext{
 		buf:     bytes.Buffer{},
@@ -94,7 +91,11 @@ func FromReader(reader io.Reader, options ...Options) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return FromHTMLNode(doc, options...)
+	var o Options
+	if len(options) > 0 {
+		o = options[0]
+	}
+	return FromHTMLNode(doc, &o)
 }
 
 // FromString parses HTML from the input string, then renders the text form.
@@ -118,7 +119,7 @@ type textifyTraverseContext struct {
 
 	prefix          string
 	tableCtx        tableTraverseContext
-	options         Options
+	options         *Options
 	endsWithSpace   bool
 	justClosedDiv   bool
 	blockquoteLevel int
@@ -264,7 +265,15 @@ func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 	case atom.P, atom.Ul:
 		return ctx.paragraphHandler(node)
 
-	case atom.Table, atom.Tfoot, atom.Th, atom.Tr, atom.Td:
+	case atom.Table:
+		if ctx.options.PrettyTables && (ctx.options.PrettyTablesMaxDepth <= 0 || ctx.options.PrettyTablesMaxDepth > 1) {
+			ctx.options.PrettyTablesMaxDepth--
+			return ctx.handleTableElement(node)
+		} else if node.DataAtom == atom.Table {
+			return ctx.paragraphHandler(node)
+		}
+		return ctx.traverseChildren(node)
+	case atom.Tfoot, atom.Th, atom.Tr, atom.Td:
 		if ctx.options.PrettyTables {
 			return ctx.handleTableElement(node)
 		} else if node.DataAtom == atom.Table {
