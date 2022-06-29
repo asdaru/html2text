@@ -2,6 +2,7 @@ package html2text
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -13,12 +14,15 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+const MAXCRASHLIMIT = 3000
+
 // Options provide toggles and overrides to control specific rendering behaviors.
 type Options struct {
 	PrettyTables         bool                 // Turns on pretty ASCII rendering for table elements.
 	PrettyTablesOptions  *PrettyTablesOptions // Configures pretty ASCII rendering for table elements.
 	OmitLinks            bool                 // Turns on omitting links
 	PrettyTablesMaxDepth int
+	ElementsCounter      int
 }
 
 // PrettyTablesOptions overrides tablewriter behaviors
@@ -146,7 +150,10 @@ func (tableCtx *tableTraverseContext) init() {
 
 func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 	ctx.justClosedDiv = false
-
+	ctx.options.ElementsCounter++
+	if ctx.options.ElementsCounter > MAXCRASHLIMIT {
+		return fmt.Errorf("MAX ELEMENT ERROR")
+	}
 	switch node.DataAtom {
 	case atom.Br:
 		return ctx.emit("\n")
