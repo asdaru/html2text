@@ -22,7 +22,6 @@ type Options struct {
 	PrettyTablesOptions  *PrettyTablesOptions // Configures pretty ASCII rendering for table elements.
 	OmitLinks            bool                 // Turns on omitting links
 	PrettyTablesMaxDepth int
-	ElementsCounter      int
 }
 
 // PrettyTablesOptions overrides tablewriter behaviors
@@ -129,6 +128,7 @@ type textifyTraverseContext struct {
 	blockquoteLevel int
 	lineLength      int
 	isPre           bool
+	elementsCounter int
 }
 
 // tableTraverseContext holds table ASCII-form related context.
@@ -150,8 +150,8 @@ func (tableCtx *tableTraverseContext) init() {
 
 func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 	ctx.justClosedDiv = false
-	ctx.options.ElementsCounter++
-	if ctx.options.ElementsCounter > MAXCRASHLIMIT {
+	ctx.elementsCounter++
+	if ctx.elementsCounter > MAXCRASHLIMIT {
 		return fmt.Errorf("MAX ELEMENT ERROR")
 	}
 	switch node.DataAtom {
